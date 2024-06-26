@@ -1,5 +1,6 @@
 use serde::Serialize;
 use std::time::{Duration, Instant};
+// use std::fs;
 
 use gj::{join::*, sql::*, util::*, *};
 
@@ -15,7 +16,11 @@ fn main() {
         queries.retain(|_, name| name.contains(q));
     }
 
-    let mut records = Vec::new();
+    let mut gj_records = Vec::new();
+    let mut fj_scalar_slt_records = Vec::new();
+    let mut fj_scalar_colt_records = Vec::new();
+    let mut fj_scalar_full_records = Vec::new();
+    let mut fj_records = Vec::new();
     let mut ddb_records = Vec::new();
 
     for (q, _i) in queries {
@@ -93,35 +98,67 @@ fn main() {
         //     });
         // }
 
-        records.push(Record {
-            query: q.into(),
-            vectorize: 1000,
-            optimize: 1,
-            strategy: 2,
-            time: (0..1)
-                .map(|_| run_query(&plan_tree, 1000, 1, BuildStrategy::COLT, &db, &payload))
-                .collect(),
-        });
-
-        // records.push(Record {
+        // fj_records.push(Record {
         //     query: q.into(),
-        //     vectorize: 1,
-        //     optimize: 0,
-        //     strategy: 0,
-        //     time: (0..args.n_trials)
-        //         .map(|_| run_query(&plan_tree, 1, 0, BuildStrategy::Full, &db, &payload))
+        //     vectorize: 1000,
+        //     optimize: 1,
+        //     strategy: 2,
+        //     time: (0..5)
+        //         .map(|_| run_query(&plan_tree, 1000, 1, BuildStrategy::COLT, &db, &payload))
         //         .collect(),
         // });
+        //
+        // fj_scalar_colt_records.push(Record {
+        //     query: q.into(),
+        //     vectorize: 1,
+        //     optimize: 1,
+        //     strategy: 2,
+        //     time: (0..5)
+        //         .map(|_| run_query(&plan_tree, 1, 1, BuildStrategy::COLT, &db, &payload))
+        //         .collect(),
+        // });
+        //
+        // fj_scalar_full_records.push(Record {
+        //     query: q.into(),
+        //     vectorize: 1,
+        //     optimize: 1,
+        //     strategy: 2,
+        //     time: (0..5)
+        //         .map(|_| run_query(&plan_tree, 1, 1, BuildStrategy::Full, &db, &payload))
+        //         .collect(),
+        // });
+        //
+        // fj_scalar_slt_records.push(Record {
+        //     query: q.into(),
+        //     vectorize: 1,
+        //     optimize: 1,
+        //     strategy: 2,
+        //     time: (0..5)
+        //         .map(|_| run_query(&plan_tree, 1, 1, BuildStrategy::SLT, &db, &payload))
+        //         .collect(),
+        // });
+
+        gj_records.push(Record {
+            query: q.into(),
+            vectorize: 1,
+            optimize: 0,
+            strategy: 0,
+            time: (0..5)
+                .map(|_| run_query(&plan_tree, 1, 0, BuildStrategy::Full, &db, &payload))
+                .collect(),
+        });
     }
 
     serde_json::to_writer_pretty(
         &mut json,
         &serde_json::json!({
-            "gj": records,
+            "gj": gj_records,
+            "fj": fj_records,
+            "fj_scalar_full": fj_scalar_full_records,
+            "fj_scalar_colt": fj_scalar_colt_records,
             "duckdb": ddb_records,
         }),
-    )
-    .unwrap();
+    ).unwrap();
 }
 
 #[derive(Serialize)]
@@ -140,6 +177,7 @@ struct DuckDbRecord {
 }
 
 fn run_query(
+    // query: String,
     plan_tree: &TreeOp,
     vectorize: usize,
     optimize: usize,
@@ -152,6 +190,7 @@ fn run_query(
     let mut build_plans = IndexMap::default();
     let mut compiled_plans = IndexMap::default();
     let tm = to_materialize(plan_tree);
+    // let mut log_plan = String::new();
     let root = tm[tm.len() - 1];
     for node in to_materialize(plan_tree) {
         // let groups = to_left_deep_plan(node);
@@ -168,7 +207,7 @@ fn run_query(
         log::debug!("out schema: {:?}", out_schema);
 
         plan = combine_lookups(optimize, plan); // TODO disabled for cyclic queries
-                                                // compute_full_plan(&db, &groups, &provides, &in_view, node);
+        // compute_full_plan(&db, &groups, &provides, &in_view, node);
 
         build_plans.insert(node, build_plan);
         provides.insert(node, out_schema);
@@ -186,6 +225,7 @@ fn run_query(
     for (node, compiled_plan) in &compiled_plans {
         let loop_start = Instant::now();
         let build_plan = &build_plans[node];
+        // log_plan = format!("{}\n{:?}\n{:?}\n{:?}\n", log_plan, node, build_plan, compiled_plan);
 
         let build_start = Instant::now();
         let tables = build_tables(db, &views, build_plan, build_strategy);
@@ -215,6 +255,7 @@ fn run_query(
         tables_buf.push(tables);
         println!("Iter takes {:?}", loop_start.elapsed().as_secs_f32());
     }
+    // fs::write(format!("../logs/gj_plans/{}.log", query), log_plan).unwrap();
     println!("Bushy join takes {:?}", start.elapsed().as_secs_f32());
     let final_attrs = provides.get(&root).unwrap();
     let final_view = views.get(&root).unwrap();
@@ -441,6 +482,12 @@ fn queries() -> IndexMap<&'static str, &'static str> {
             ("33c", "IMDBQ113"), // SLOW
         ])
     }
+
+    // if linear {
+    //     queries.extend_from_slice(&[
+    //         ("star", "IMDBQ114"),
+    //     ])
+    // }
 
     // */
     queries.into_iter().collect()

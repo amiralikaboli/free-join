@@ -7,4 +7,9 @@ plot.png
 plot.pdf
 gj/out.json
 gj/gj.json
+gj/gj.log
 logs/plan-profiles
+logs/gj_plans
+venv
+.idea
+target

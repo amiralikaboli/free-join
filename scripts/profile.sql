@@ -4219,3 +4219,11 @@ WHERE ci.note IN ('(voice)',
   AND an.person_id = n.id
   AND an.person_id = ci.person_id;
 
+PRAGMA profiling_output='./star.json';
+SELECT t.id, t.kind_id, mc.id, mi_idx.id
+FROM movie_companies AS mc,
+     movie_info_idx AS mi_idx,
+     title AS t
+WHERE t.id = mc.movie_id
+  AND t.id = mi_idx.movie_id
+  AND mc.movie_id = mi_idx.movie_id;

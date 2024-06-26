@@ -21,7 +21,7 @@ $(PREPROCESSOR):
 $(IMDB): duckdb
 	$(MAKE) -C data/imdb
 
-${PROFILE}: ${DUCKDB} ${IMDB} scripts/profile.sh scripts/profile.sql
+$(PROFILE): $(DUCKDB) $(IMDB) scripts/profile.sh scripts/profile.sql
 	bash scripts/profile.sh
 
 .PHONY: imdb_jsons
@@ -36,10 +36,10 @@ $(IMDB_JSONS) &: $(DUCKDB) $(IMDB)
 	 mv IMDB*.json ../logs/plan-profiles/)
 
 
-$(IMDB_PAR): $(DUCKDB) scripts/transform.sql
+$(IMDB_PAR): $(DUCKDB) $(IMDB) scripts/transform.sql
 	$(DUCKDB) -c ".read './scripts/transform.sql'"
 
-$(DATA): preprocessor/run.sh $(DUCKDB) $(IMDB) $(IMDB_PAR) ${PROFILE} $(PREPROCESSOR)
+$(DATA): preprocessor/run.sh $(DUCKDB) $(IMDB) $(IMDB_PAR) $(PROFILE) $(PREPROCESSOR)
 	cd preprocessor && bash run.sh join-order-benchmark imdb && touch ../$@
 
 test: preprocessor/test.sh $(DATA)
@@ -49,9 +49,9 @@ GJ_SRC=$(shell find gj/src -name "*.rs")
 
 gj/gj.json: $(GJ_SRC)
 	# (cd gj && time cargo run --profile=release-final -- -O0 -O1 -O2 -n5 --json=gj.json)
-	(cd gj && time cargo run --profile=release-final -- -O1 -n1 --json=gj.json)
+	(cd gj && cargo run --profile=release-final -- -O1 -n1 --json=gj.json | tee gj.log)
 
-plot.html: ./scripts/plot.py gj/gj.json
+plot: ./scripts/plot.py gj/gj.json
 	$^
 
 clean_all: clean
