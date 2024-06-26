@@ -17,10 +17,10 @@ fn main() {
     }
 
     let mut gj_records = Vec::new();
-    let mut fj_scalar_slt_records = Vec::new();
-    let mut fj_scalar_colt_records = Vec::new();
-    let mut fj_scalar_full_records = Vec::new();
-    let mut fj_records = Vec::new();
+    // let mut fj_scalar_slt_records = Vec::new();
+    // let mut fj_scalar_colt_records = Vec::new();
+    // let mut fj_scalar_full_records = Vec::new();
+    // let mut fj_records = Vec::new();
     let mut ddb_records = Vec::new();
 
     for (q, _i) in queries {
@@ -153,9 +153,10 @@ fn main() {
         &mut json,
         &serde_json::json!({
             "gj": gj_records,
-            "fj": fj_records,
-            "fj_scalar_full": fj_scalar_full_records,
-            "fj_scalar_colt": fj_scalar_colt_records,
+            // "fj": fj_records,
+            // "fj_scalar_full": fj_scalar_full_records,
+            // "fj_scalar_slt": fj_scalar_slt_records,
+            // "fj_scalar_colt": fj_scalar_colt_records,
             "duckdb": ddb_records,
         }),
     ).unwrap();
