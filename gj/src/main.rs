@@ -17,9 +17,9 @@ fn main() {
     }
 
     let mut gj_records = Vec::new();
-    // let mut fj_scalar_slt_records = Vec::new();
-    // let mut fj_scalar_colt_records = Vec::new();
-    // let mut fj_scalar_full_records = Vec::new();
+    let mut gj_colt_records = Vec::new();
+    let mut fj_scalar_full_records = Vec::new();
+    let mut fj_scalar_colt_records = Vec::new();
     // let mut fj_records = Vec::new();
     let mut ddb_records = Vec::new();
 
@@ -107,36 +107,6 @@ fn main() {
         //         .map(|_| run_query(&plan_tree, 1000, 1, BuildStrategy::COLT, &db, &payload))
         //         .collect(),
         // });
-        //
-        // fj_scalar_colt_records.push(Record {
-        //     query: q.into(),
-        //     vectorize: 1,
-        //     optimize: 1,
-        //     strategy: 2,
-        //     time: (0..5)
-        //         .map(|_| run_query(&plan_tree, 1, 1, BuildStrategy::COLT, &db, &payload))
-        //         .collect(),
-        // });
-        //
-        // fj_scalar_full_records.push(Record {
-        //     query: q.into(),
-        //     vectorize: 1,
-        //     optimize: 1,
-        //     strategy: 2,
-        //     time: (0..5)
-        //         .map(|_| run_query(&plan_tree, 1, 1, BuildStrategy::Full, &db, &payload))
-        //         .collect(),
-        // });
-        //
-        // fj_scalar_slt_records.push(Record {
-        //     query: q.into(),
-        //     vectorize: 1,
-        //     optimize: 1,
-        //     strategy: 2,
-        //     time: (0..5)
-        //         .map(|_| run_query(&plan_tree, 1, 1, BuildStrategy::SLT, &db, &payload))
-        //         .collect(),
-        // });
 
         gj_records.push(Record {
             query: q.into(),
@@ -147,16 +117,46 @@ fn main() {
                 .map(|_| run_query(&plan_tree, 1, 0, BuildStrategy::Full, &db, &payload))
                 .collect(),
         });
+
+        gj_colt_records.push(Record {
+            query: q.into(),
+            vectorize: 1,
+            optimize: 0,
+            strategy: 0,
+            time: (0..5)
+                .map(|_| run_query(&plan_tree, 1, 0, BuildStrategy::COLT, &db, &payload))
+                .collect(),
+        });
+
+        fj_scalar_full_records.push(Record {
+            query: q.into(),
+            vectorize: 1,
+            optimize: 1,
+            strategy: 2,
+            time: (0..5)
+                .map(|_| run_query(&plan_tree, 1, 1, BuildStrategy::Full, &db, &payload))
+                .collect(),
+        });
+
+        fj_scalar_colt_records.push(Record {
+            query: q.into(),
+            vectorize: 1,
+            optimize: 1,
+            strategy: 2,
+            time: (0..5)
+                .map(|_| run_query(&plan_tree, 1, 1, BuildStrategy::COLT, &db, &payload))
+                .collect(),
+        });
     }
 
     serde_json::to_writer_pretty(
         &mut json,
         &serde_json::json!({
             "gj": gj_records,
+            "gj_colt": gj_colt_records,
+            "fj_scalar_full": fj_scalar_full_records,
+            "fj_scalar_colt": fj_scalar_colt_records,
             // "fj": fj_records,
-            // "fj_scalar_full": fj_scalar_full_records,
-            // "fj_scalar_slt": fj_scalar_slt_records,
-            // "fj_scalar_colt": fj_scalar_colt_records,
             "duckdb": ddb_records,
         }),
     ).unwrap();
@@ -226,7 +226,6 @@ fn run_query(
     for (node, compiled_plan) in &compiled_plans {
         let loop_start = Instant::now();
         let build_plan = &build_plans[node];
-        // log_plan = format!("{}\n{:?}\n{:?}\n{:?}\n", log_plan, node, build_plan, compiled_plan);
 
         let build_start = Instant::now();
         let tables = build_tables(db, &views, build_plan, build_strategy);
@@ -241,13 +240,14 @@ fn run_query(
 
         println!("Running join with {} tables", tables.len());
         let join_start = Instant::now();
-        free_join(
+        let opt_compiled_plan = free_join(
             vectorize,
             optimize,
             &tables,
             compiled_plan,
             &mut intermediate,
         );
+        // log_plan = format!("{}\n{:?}\n{:?}\n{:?}\n", log_plan, node, build_plan, opt_compiled_plan);
         let join_time = join_start.elapsed();
         println!("Join took {:?}", join_time.as_secs_f32());
         total_joining += join_time;

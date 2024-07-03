@@ -231,7 +231,7 @@ pub fn free_join(
     tables: &[Table],
     compiled_plan: &[Instruction2],
     out: &mut View,
-) {
+) -> Vec<Instruction2> {
     let mut compiled_plan = compiled_plan.to_vec();
     println!("n instructions: {}", compiled_plan.len());
     if let Table::Arr { id_cols, data_cols } = &tables[0] {
@@ -379,6 +379,8 @@ pub fn free_join(
     } else {
         unreachable!("The first table must be flat");
     }
+
+    compiled_plan
 }
 
 struct JoinContext<'a> {

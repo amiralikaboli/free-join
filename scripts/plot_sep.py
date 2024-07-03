@@ -20,7 +20,7 @@ if __name__ == '__main__':
 	if mode == "gj":
 		alt = "gj"
 	else:
-		alt = "fj_scalar_full"
+		alt = "fj_scalar_colt"
 
 	with open(f"{os.path.dirname(__file__)}/../gj/gj.json") as json_file:
 		results = json.load(json_file)
