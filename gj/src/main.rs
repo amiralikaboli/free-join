@@ -17,8 +17,8 @@ fn main() {
     }
 
     let mut gj_records = Vec::new();
-    let mut gj_colt_records = Vec::new();
     let mut fj_scalar_full_records = Vec::new();
+    let mut fj_scalar_slt_records = Vec::new();
     let mut fj_scalar_colt_records = Vec::new();
     // let mut fj_records = Vec::new();
     let mut ddb_records = Vec::new();
@@ -110,39 +110,39 @@ fn main() {
 
         gj_records.push(Record {
             query: q.into(),
-            vectorize: 1,
-            optimize: 0,
-            strategy: 0,
+            // vectorize: 1,
+            // optimize: 0,
+            // strategy: 0,
             time: (0..5)
                 .map(|_| run_query(&plan_tree, 1, 0, BuildStrategy::Full, &db, &payload))
                 .collect(),
         });
 
-        gj_colt_records.push(Record {
-            query: q.into(),
-            vectorize: 1,
-            optimize: 0,
-            strategy: 0,
-            time: (0..5)
-                .map(|_| run_query(&plan_tree, 1, 0, BuildStrategy::COLT, &db, &payload))
-                .collect(),
-        });
-
         fj_scalar_full_records.push(Record {
             query: q.into(),
-            vectorize: 1,
-            optimize: 1,
-            strategy: 2,
+            // vectorize: 1,
+            // optimize: 1,
+            // strategy: 2,
             time: (0..5)
                 .map(|_| run_query(&plan_tree, 1, 1, BuildStrategy::Full, &db, &payload))
                 .collect(),
         });
 
+        fj_scalar_slt_records.push(Record {
+            query: q.into(),
+            // vectorize: 1,
+            // optimize: 1,
+            // strategy: 1,
+            time: (0..5)
+                .map(|_| run_query(&plan_tree, 1, 1, BuildStrategy::SLT, &db, &payload))
+                .collect(),
+        });
+
         fj_scalar_colt_records.push(Record {
             query: q.into(),
-            vectorize: 1,
-            optimize: 1,
-            strategy: 2,
+            // vectorize: 1,
+            // optimize: 1,
+            // strategy: 2,
             time: (0..5)
                 .map(|_| run_query(&plan_tree, 1, 1, BuildStrategy::COLT, &db, &payload))
                 .collect(),
@@ -153,8 +153,8 @@ fn main() {
         &mut json,
         &serde_json::json!({
             "gj": gj_records,
-            "gj_colt": gj_colt_records,
             "fj_scalar_full": fj_scalar_full_records,
+            "fj_scalar_slt": fj_scalar_slt_records,
             "fj_scalar_colt": fj_scalar_colt_records,
             // "fj": fj_records,
             "duckdb": ddb_records,
@@ -165,9 +165,9 @@ fn main() {
 #[derive(Serialize)]
 struct Record {
     query: String,
-    vectorize: usize,
-    optimize: usize,
-    strategy: usize,
+    // vectorize: usize,
+    // optimize: usize,
+    // strategy: usize,
     time: Vec<f64>,
 }
 
@@ -484,12 +484,5 @@ fn queries() -> IndexMap<&'static str, &'static str> {
         ])
     }
 
-    // if linear {
-    //     queries.extend_from_slice(&[
-    //         ("star", "IMDBQ114"),
-    //     ])
-    // }
-
-    // */
     queries.into_iter().collect()
 }

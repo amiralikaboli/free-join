@@ -45,16 +45,14 @@ if __name__ == '__main__':
 
 	print(f'DuckDB Speedup: {geometric_mean(our_times, duckdb_times)}x')
 	print(f'{mode.upper()} Speedup: {geometric_mean(our_times, gj_times)}x')
-	# ratios = np.array(our_times) / np.array(gj_times)
-	# print("Worst query:", queries[np.argmax(ratios)])
 
 	plt.figure(figsize=(12, 5))
-	ratio = 1.2
+	ratio = 1
+	eye_line = [min(duckdb_times + gj_times + our_times) / ratio, max(duckdb_times + gj_times + our_times) * ratio]
 
 	plt.subplot(1, 2, 1)
 	plt.scatter(gj_times, our_times, color="orange", s=10)
-	points = [max(min(gj_times), min(our_times)) / ratio, min(max(gj_times), max(our_times)) * ratio]
-	plt.plot(points, points, color="gray")
+	plt.plot(eye_line, eye_line, color="gray")
 	plt.xscale("log")
 	plt.yscale("log")
 	plt.xlabel(f"{mode.upper()} (s)")
@@ -62,8 +60,7 @@ if __name__ == '__main__':
 
 	plt.subplot(1, 2, 2)
 	plt.scatter(duckdb_times, our_times, color="orange", s=10)
-	points = [max(min(duckdb_times), min(our_times)) / ratio, min(max(duckdb_times), max(our_times)) * ratio]
-	plt.plot(points, points, color="gray")
+	plt.plot(eye_line, eye_line, color="gray")
 	plt.xscale("log")
 	plt.yscale("log")
 	plt.xlabel("DuckDB (s)")
