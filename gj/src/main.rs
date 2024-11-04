@@ -17,10 +17,8 @@ fn main() {
     }
 
     let mut gj_records = Vec::new();
-    let mut fj_scalar_full_records = Vec::new();
-    let mut fj_scalar_slt_records = Vec::new();
-    let mut fj_scalar_colt_records = Vec::new();
-    // let mut fj_records = Vec::new();
+    let mut fj_scalar_records = Vec::new();
+    let mut fj_records = Vec::new();
     let mut ddb_records = Vec::new();
 
     for (q, _i) in queries {
@@ -48,66 +46,6 @@ fn main() {
 
         let db = load_db(&args, q, &scan, &plan);
 
-        // for optimize in [0, 1, 2] {
-        //     records.push(Record {
-        //         query: q.into(),
-        //         vectorize: 1000,
-        //         optimize,
-        //         strategy: 2,
-        //         time: (0..args.n_trials)
-        //             .map(|_| {
-        //                 run_query(
-        //                     &plan_tree,
-        //                     1000,
-        //                     optimize,
-        //                     BuildStrategy::COLT,
-        //                     &db,
-        //                     &payload,
-        //                 )
-        //             })
-        //             .collect(),
-        //     });
-        // }
-
-        // for (i, strategy) in [BuildStrategy::Full, BuildStrategy::SLT, BuildStrategy::COLT]
-        //     .into_iter()
-        //     .enumerate()
-        // {
-        //     records.push(Record {
-        //         query: q.into(),
-        //         vectorize: 1000,
-        //         optimize: 1,
-        //         strategy: i,
-        //         time: (0..args.n_trials)
-        //             .map(|_| run_query(&plan_tree, 1000, 1, strategy, &db, &payload))
-        //             .collect(),
-        //     });
-        // }
-
-        // for vectorize in [1, 10, 100, 1000] {
-        //     records.push(Record {
-        //         query: q.into(),
-        //         vectorize,
-        //         optimize: 1,
-        //         strategy: 2,
-        //         time: (0..args.n_trials)
-        //             .map(|_| {
-        //                 run_query(&plan_tree, vectorize, 1, BuildStrategy::COLT, &db, &payload)
-        //             })
-        //             .collect(),
-        //     });
-        // }
-
-        // fj_records.push(Record {
-        //     query: q.into(),
-        //     vectorize: 1000,
-        //     optimize: 1,
-        //     strategy: 2,
-        //     time: (0..5)
-        //         .map(|_| run_query(&plan_tree, 1000, 1, BuildStrategy::COLT, &db, &payload))
-        //         .collect(),
-        // });
-
         gj_records.push(Record {
             query: q.into(),
             // vectorize: 1,
@@ -118,27 +56,7 @@ fn main() {
                 .collect(),
         });
 
-        fj_scalar_full_records.push(Record {
-            query: q.into(),
-            // vectorize: 1,
-            // optimize: 1,
-            // strategy: 2,
-            time: (0..5)
-                .map(|_| run_query(&plan_tree, 1, 1, BuildStrategy::Full, &db, &payload))
-                .collect(),
-        });
-
-        fj_scalar_slt_records.push(Record {
-            query: q.into(),
-            // vectorize: 1,
-            // optimize: 1,
-            // strategy: 1,
-            time: (0..5)
-                .map(|_| run_query(&plan_tree, 1, 1, BuildStrategy::SLT, &db, &payload))
-                .collect(),
-        });
-
-        fj_scalar_colt_records.push(Record {
+        fj_scalar_records.push(Record {
             query: q.into(),
             // vectorize: 1,
             // optimize: 1,
@@ -147,16 +65,24 @@ fn main() {
                 .map(|_| run_query(&plan_tree, 1, 1, BuildStrategy::COLT, &db, &payload))
                 .collect(),
         });
+
+        fj_records.push(Record {
+            query: q.into(),
+            // vectorize: 1000,
+            // optimize: 1,
+            // strategy: 2,
+            time: (0..5)
+                .map(|_| run_query(&plan_tree, 1000, 1, BuildStrategy::COLT, &db, &payload))
+                .collect(),
+        });
     }
 
     serde_json::to_writer_pretty(
         &mut json,
         &serde_json::json!({
             "gj": gj_records,
-            "fj_scalar_full": fj_scalar_full_records,
-            "fj_scalar_slt": fj_scalar_slt_records,
-            "fj_scalar_colt": fj_scalar_colt_records,
-            // "fj": fj_records,
+            "fj_scalar": fj_scalar_records,
+            "fj": fj_records,
             "duckdb": ddb_records,
         }),
     ).unwrap();
@@ -387,10 +313,10 @@ fn queries() -> IndexMap<&'static str, &'static str> {
             ("12a", "IMDBQ042"),
             ("12b", "IMDBQ043"), // TRIE SLOW
             ("12c", "IMDBQ044"),
-            // ("13a", "IMDBQ045"),
+            ("13a", "IMDBQ045"),
             ("13b", "IMDBQ046"), // TRIE SLOW
             ("13c", "IMDBQ047"), // TRIE SLOW
-            // ("13d", "IMDBQ048"),
+            ("13d", "IMDBQ048"),
             ("14a", "IMDBQ049"),
             ("14b", "IMDBQ050"),
             ("14c", "IMDBQ051"),
